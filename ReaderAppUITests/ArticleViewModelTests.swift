@@ -6,30 +6,70 @@
 //
 
 import XCTest
+@testable import ReaderApp
 
+class ArticleViewModelMock: NewsProtocol {
+
+    var articles: [Articles] = []
+    
+    var bookMarkedarticles: [Articles] = []
+    
+    func loadArticles() {
+        Task {
+            do {
+                guard let cArticles = try await loadArticlesFromCoreData() else { return }
+                self.articles = cArticles
+            } catch {
+               
+            }
+        }
+    }
+    
+    func loadArticlesFromCoreData() async throws -> [ReaderApp.Articles]? {
+        guard let context = (UIApplication.shared.delegate as? AppDelegate)?.persistentContainer.viewContext else {
+            return []
+        }
+        let mockArticle = Articles(context: context)
+        mockArticle.author = "ABC"
+        mockArticle.title = "Hello, i am a mock article"
+        mockArticle.isBookmarked = false
+        return [mockArticle]
+    }
+    
+    func fetchBookMarkedArticles() async {
+        guard let context = (UIApplication.shared.delegate as? AppDelegate)?.persistentContainer.viewContext else {
+            return
+        }
+        let mockArticle = Articles(context: context)
+        mockArticle.author = "Brad pitt"
+        mockArticle.title = "Hello, i am a bookmarked article"
+        mockArticle.isBookmarked = true
+        self.bookMarkedarticles = [mockArticle]
+    }
+    
+}
+
+@MainActor
 final class ArticleViewModelTests: XCTestCase {
+    
+    var viewModel: NewsProtocol!
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        viewModel = ArticlesViewModel(news: ArticleViewModelMock()) as? NewsProtocol
     }
 
     override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        viewModel = nil
     }
-
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    
+    func testLoadArticles() {
+        viewModel.loadArticles()
+        XCTAssertEqual(viewModel.articles.count, 1)
     }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
+    
+    func testLoadArticlesReturnsBookmarkedArticles() async throws {
+        await viewModel.fetchBookMarkedArticles()
+        XCTAssertEqual(viewModel.bookMarkedarticles.count, 1)
     }
 
 }
