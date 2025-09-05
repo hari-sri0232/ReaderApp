@@ -4,6 +4,10 @@ ReaderApp is an iOS application that fetches news articles from a remote API, st
 
 ---
 
+## Languages
+
+- SwiftUI
+
 ## Features
 
 - Fetch news articles asynchronously using `URLSession` and `async/await`
